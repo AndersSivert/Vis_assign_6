@@ -32,6 +32,8 @@ public:
 	void GenerateKernel();
 
 	vector<Vector2f> GenerateStreamLines(Vector2f startPoint);
+	vector<Vector2f> GenerateStreamLineKernelLength(Vector2f startPoint);
+
 
 	Vector2f static GetFieldValue1(Vector2f pos);
 	Vector2f RungeKuttaIntegration(Vector2f pos);

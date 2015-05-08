@@ -466,6 +466,7 @@ vector<Vector2f> Assignment6::GenerateStreamLines(Vector2f startPoint) {
 	bool done = false;
 	std::vector<Vector2f>::iterator it;
 	int steps = 0;
+	
 	//Forwards interpolation:
 	while(!done && steps < RKSteps) {
 		it = line.end();
@@ -488,6 +489,55 @@ vector<Vector2f> Assignment6::GenerateStreamLines(Vector2f startPoint) {
 	steps = 0;
 
 	while(!done && steps < stepsRemaining) {
+		it = line.begin();
+		Vector2f pos = line.front();
+
+		Vector2f newPos = RungeKuttaIntegration(pos,false);
+		//Discard conditions: out of bounds, too-low or zero magnitude
+		if(field.insideBounds(newPos)) {
+			line.insert(it,newPos);
+			if(field.sample(newPos).getSqrNorm()<minimumMagnitude) {
+				done = true;
+			}
+		} else {
+			done = true;
+		}
+		steps++;
+	}
+
+	return line;
+}
+
+vector<Vector2f> Assignment6::GenerateStreamLineKernelLength(Vector2f startPoint) {
+	vector<Vector2f> line;
+	line.push_back(startPoint);
+	bool done = false;
+	std::vector<Vector2f>::iterator it;
+	int steps = 0;
+	//TODO: Replace RKSteps wit the size of the kernel
+	//Supposed to go this amount steps forwards and backwards
+	int maxSteps = (int)(RKSteps - 1)/2;
+	//Forwards interpolation:
+	while(!done && steps < maxSteps) {
+		it = line.end();
+		Vector2f pos = line.back();
+
+		Vector2f newPos = RungeKuttaIntegration(pos,true);
+		//Discard conditions: out of bounds, too-low or zero magnitude
+		if(field.insideBounds(newPos)) {
+			line.insert(it,newPos);
+			if(field.sample(newPos).getSqrNorm()<minimumMagnitude) {
+				done = true;
+			}
+		} else {
+			done = true;
+		}
+		steps++;
+	}
+	done = false;
+	steps = 0;
+
+	while(!done && steps < maxSteps) {
 		it = line.begin();
 		Vector2f pos = line.front();
 
