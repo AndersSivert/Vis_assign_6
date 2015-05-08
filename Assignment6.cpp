@@ -46,7 +46,11 @@ Assignment6::Assignment6()
 {
     viewer = NULL;
     RungeKutta = false;
-	fileName = "C:\\Users\\Martin\\Desktop\\GeoX\\Assignment06\\Data\\CylinderGerrisC2T15.am";
+
+	//fileName = "C:\\Users\\Martin\\Desktop\\GeoX\\Assignment05\\Data\\ANoise2CT4.am";				//Martin
+	fileName = "C:\Program Files\GeoX\experiments\Visualization\Assignment6\Data\ANoise2CT4.am";	//Anders
+	//fileName = "";																				//Jim
+
 	randomPoints=false;
 	startingPoints="10";
 	readField = false;
@@ -97,56 +101,6 @@ namespace
                        // next highest power of 2.
         return n;
     }
-}
-
-void Assignment6::Comparison() {
-
-	viewer->clear();
-	Vector2f pos;
-
-	if(randomPoints)
-	{
-		float v = (float)rand() / RAND_MAX;
-		v = v*2*3.1415;
-		pos = makeVector2f(0.5*sin(v),cos(v));
-	} else {
-		int n = 0;
-		string temp;
-		stringstream ss(startingPoints);
-		getline(ss,temp,',');
-		pos[0] = stof(temp);
-		getline(ss,temp,',');
-		pos[1] = stof(temp);
-	}
-
-
-
-	Vector2f posRK = pos;
-	for(int i = 0; i<RKSteps;i++)
-	{
-		Vector2f p1 =  Assignment6::GetFieldValue1(posRK);
-		Vector2f p2 =  Assignment6::GetFieldValue1(posRK+p1*RKStepSize/2);
-		Vector2f p3 =  Assignment6::GetFieldValue1(posRK+p2*RKStepSize/2);
-		Vector2f p4 =  Assignment6::GetFieldValue1(posRK+p3*RKStepSize);
-		Vector2f NewPosRK = posRK + (p1 + p2*2 + p3*2 + p4)*RKStepSize/6;
-		viewer->addLine(posRK,NewPosRK,colors[0]);
-		posRK = NewPosRK;
-	}
-	
-	Vector2f posE = pos;
-	for(int i = 0; i<EulerSteps;i++)
-	{
-		Vector2f NewPosE = posE + Assignment6::GetFieldValue1(posE)*EulerStepSize;
-		viewer->addLine(posE,NewPosE,colors[colors.size()-1]);
-		posE = NewPosE;
-	}
-	colorIndex = (colorIndex+3)%colors.size();
-	viewer->refresh();
-}
-
-Vector2f Assignment6::GetFieldValue1(Vector2f pos)
-{
-	return makeVector2f(-pos[1],pos[0]/2);
 }
 
 Vector2f Assignment6::EulerIntegration(Vector2f pos) {
