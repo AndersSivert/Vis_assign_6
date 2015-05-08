@@ -84,6 +84,10 @@ public:
 	ScalarField2 texture;
 	vector<float> kernelValues;
 
+	//Texture resolutions
+	int xPowerOfTwo;
+	int yPowerOfTwo;
+
 protected:
     GLGeometryViewer* viewer;
 };

@@ -19,8 +19,13 @@ IMPLEMENT_GEOX_CLASS( Assignment6, 0)
     BEGIN_CLASS_INIT( Assignment6 );
 	ADD_SEPARATOR("Vectorfield file name")
 	ADD_STRING_PROP(fileName, 0)
-	ADD_BOOLEAN_PROP(greyScale,0)
 	
+	ADD_SEPARATOR("Texture parameters")
+	ADD_BOOLEAN_PROP(greyScale,0)
+	ADD_INT32_PROP(xPowerOfTwo,0)
+	ADD_INT32_PROP(yPowerOfTwo,0)
+
+
 	ADD_SEPARATOR("Runge-Kutta parameters")
 	ADD_INT32_PROP(RKSteps,0)
 	ADD_FLOAT32_PROP(RKStepSize,0)
@@ -48,12 +53,15 @@ Assignment6::Assignment6()
     RungeKutta = false;
 
 	//fileName = "C:\\Users\\Martin\\Desktop\\GeoX\\Assignment05\\Data\\ANoise2CT4.am";					//Martin
-	fileName = "C:\\Program Files\\GeoX\\experiments\\Visualization\\Assignment6\\Data\\ANoise2CT4.am";	//Anders
+	//fileName = "C:\\Program Files\\GeoX\\experiments\\Visualization\\Assignment6\\Data\\ANoise2CT4.am";	//Anders
 	//fileName = "";																					//Jim
 
 	randomPoints=false;
 	startingPoints="10";
 	readField = false;
+	
+	xPowerOfTwo = 0;
+	yPowerOfTwo = 0;
 
 	EulerSteps = 100;
 	EulerStepSize = 0.1;
@@ -405,8 +413,14 @@ void Assignment6::DrawStreamLines()
 void Assignment6::GenerateTexture() {
 	viewer->clear();
 	texture.clear();
-	const int iWidth = NextPOT(field.boundMax()[0]-field.boundMin()[0])*2;
-	const int iHeight = NextPOT(field.boundMax()[1]-field.boundMin()[1])*2;
+	int iWidth = NextPOT(field.boundMax()[0]-field.boundMin()[0]);
+	if(xPowerOfTwo>0) {
+		iWidth = pow(2.0,xPowerOfTwo);
+	}
+	int iHeight = NextPOT(field.boundMax()[1]-field.boundMin()[1]);
+	if(yPowerOfTwo>0) {
+		iHeight = pow(2.0,yPowerOfTwo);
+	}
 
 	texture.init(field.boundMin(),field.boundMax(),makeVector2ui(iWidth,iHeight));
 	if(greyScale) {
