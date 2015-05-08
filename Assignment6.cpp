@@ -19,37 +19,15 @@ IMPLEMENT_GEOX_CLASS( Assignment6, 0)
     BEGIN_CLASS_INIT( Assignment6 );
 	ADD_SEPARATOR("Vectorfield file name")
 	ADD_STRING_PROP(fileName, 0)
+	ADD_BOOLEAN_PROP(greyScale,0)
 	
-	ADD_SEPARATOR("Starting Line(s)")
-	
-    ADD_STRING_PROP(startingPoints, 0)
-	ADD_BOOLEAN_PROP(randomPoints,0)
-	ADD_BOOLEAN_PROP(grid,0)
-	
-	
-
-    ADD_SEPARATOR("Euler parameters")
-	ADD_INT32_PROP(EulerSteps,0)
-	ADD_FLOAT32_PROP(EulerStepSize,0)
-
 	ADD_SEPARATOR("Runge-Kutta parameters")
 	ADD_INT32_PROP(RKSteps,0)
 	ADD_FLOAT32_PROP(RKStepSize,0)
 
 	
-	ADD_SEPARATOR("Stream Line options")
-	ADD_BOOLEAN_PROP(showPoints,0)
-	ADD_BOOLEAN_PROP(magnitudeColor,0)
-	ADD_BOOLEAN_PROP(directionField,0)
-	ADD_FLOAT32_PROP(maxLength,0)
-	ADD_FLOAT32_PROP(minimumMagnitude,0)
-	
-	ADD_INT32_PROP(adjustArea,0)
-	ADD_INT32_PROP(adjustSteps,0)
-	ADD_FLOAT32_PROP(maxAdjustment,0);
-
-	ADD_NOARGS_METHOD(Assignment6::Comparison)
 	ADD_NOARGS_METHOD(Assignment6::ReadFieldFromFile)
+	ADD_NOARGS_METHOD(Assignment6::GenerateTexture)
 	ADD_NOARGS_METHOD(Assignment6::DrawStreamLines)
 
 	
@@ -103,6 +81,23 @@ Assignment6::Assignment6()
 
 Assignment6::~Assignment6() {}
 
+namespace
+{
+    ///Returns the next power-of-two
+    int32 NextPOT(int32 n)
+    {
+        n--;
+        n |= n >> 1;   // Divide by 2^k for consecutive doublings of k up to 32,
+        n |= n >> 2;   // and then or the results.
+        n |= n >> 4;
+        n |= n >> 8;
+        n |= n >> 16;
+        n++;           // The result is a number of 1 bits equal to the number
+                       // of bits in the original number, plus 1. That's the
+                       // next highest power of 2.
+        return n;
+    }
+}
 
 void Assignment6::Comparison() {
 
@@ -454,7 +449,27 @@ void Assignment6::DrawStreamLines()
 }
 
 void Assignment6::GenerateTexture() {
+	viewer->clear();
 	texture.clear();
-	NextPOT(field.boundMax()[0]-field.boundMin()[0]);
+	const int iWidth = NextPOT(field.boundMax()[0]-field.boundMin()[0])*2;
+	const int iHeight = NextPOT(field.boundMax()[1]-field.boundMin()[1])*2;
 
+	texture.init(field.boundMin(),field.boundMax(),makeVector2ui(iWidth,iHeight));
+	if(greyScale) {
+		for(size_t i = 0; i < iWidth;i++) {
+			for(size_t j = 0; j < iHeight; j++) {
+				
+				texture.setNodeScalar(i,j,(float)rand()/RAND_MAX);
+			}
+		}
+	} else {
+		for(size_t i = 0; i < iWidth;i++) {
+			for(size_t j = 0; j < iHeight; j++) {
+				float value = (float)rand()/RAND_MAX;
+				texture.setNodeScalar(i,j, (value > 0.5) ? 1 : 0);
+			}
+		}
+	}
+	viewer->setTextureGray(texture.getData());
+	viewer->refresh();
 }

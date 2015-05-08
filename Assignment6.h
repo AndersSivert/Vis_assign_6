@@ -77,7 +77,9 @@ public:
 
 	VectorField2 field;
 
+	bool greyScale;
 	ScalarField2 texture;
+
 
 protected:
     GLGeometryViewer* viewer;
