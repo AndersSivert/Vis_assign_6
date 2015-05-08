@@ -34,6 +34,7 @@ IMPLEMENT_GEOX_CLASS( Assignment6, 0)
 	
 	ADD_NOARGS_METHOD(Assignment6::ReadFieldFromFile)
 	ADD_NOARGS_METHOD(Assignment6::GenerateTexture)
+	ADD_NOARGS_METHOD(Assignment6::ClassicLIC)
 	ADD_NOARGS_METHOD(Assignment6::DrawStreamLines)
 
 	
@@ -430,8 +431,9 @@ void Assignment6::GenerateTexture() {
 	}
 
 	srand(textureSeed);
-
+	
 	texture.init(field.boundMin(),field.boundMax(),makeVector2ui(iWidth,iHeight));
+	LICtexture.init(field.boundMin(),field.boundMax(),makeVector2ui(iWidth,iHeight));
 	if(greyScale) {
 		for(size_t i = 0; i < iWidth;i++) {
 			for(size_t j = 0; j < iHeight; j++) {
@@ -447,16 +449,20 @@ void Assignment6::GenerateTexture() {
 			}
 		}
 	}
+	output << "segment length 1: " << min((texture.boundMax()[0] - texture.boundMin()[0])/iWidth,(texture.boundMax()[1] - texture.boundMin()[1])/iHeight) << "\n";
+	output << "segment length 2: " << min((texture.nodePosition(0,0)-texture.nodePosition(1,0)).getSqrNorm(),(texture.nodePosition(0,0)-texture.nodePosition(0,1)).getSqrNorm()) << "\n";
+
 	viewer->setTextureGray(texture.getData());
 	viewer->refresh();
 }
 
 void Assignment6::GenerateKernel() {
 	kernelValues.clear();
+	float size = 2.0*max(xPowerOfTwo,yPowerOfTwo)+1;
 	//TODO: Implement different kernels, kernel sizes etc.
 	//Currently box kernel of size 5
-	for(int i=0;i<5;i++) {
-		kernelValues.push_back(1/5);
+	for(int i=0;i<max(xPowerOfTwo,yPowerOfTwo);i++) {
+		kernelValues.push_back(1.0/size);
 	}
 }
 
@@ -508,51 +514,150 @@ vector<Vector2f> Assignment6::GenerateStreamLines(Vector2f startPoint) {
 	return line;
 }
 
-vector<Vector2f> Assignment6::GenerateStreamLineKernelLength(Vector2f startPoint) {
-	vector<Vector2f> line;
-	line.push_back(startPoint);
+vector<Vector2f> Assignment6::GenerateStreamLineEquidistant(Vector2f startPoint, float segmentLength) {
+	
+	vector<Vector2f> sampleLine;
+	sampleLine.push_back(startPoint);
 	bool done = false;
 	std::vector<Vector2f>::iterator it;
+	float length = 0;
+	float maxLength = kernelValues.size()*segmentLength/1.9;
+	float permanentLength = 0;
 	int steps = 0;
-	//TODO: Replace RKSteps wit the size of the kernel
-	//Supposed to go this amount steps forwards and backwards
-	int maxSteps = (int)(RKSteps - 1)/2;
+	Vector2f pos = startPoint;
+	//output << "new line \n";
 	//Forwards interpolation:
-	while(!done && steps < maxSteps) {
-		it = line.end();
-		Vector2f pos = line.back();
-
+	while(!done && steps < RKSteps && permanentLength<maxLength) {
+		
 		Vector2f newPos = RungeKuttaIntegration(pos,true);
+		//output << "forwards length " << length << "\n";
+		float newDistance = (newPos-pos).getSqrNorm();
+		permanentLength += newDistance;
 		//Discard conditions: out of bounds, too-low or zero magnitude
 		if(field.insideBounds(newPos)) {
-			line.insert(it,newPos);
 			if(field.sample(newPos).getSqrNorm()<minimumMagnitude) {
 				done = true;
 			}
+			
+			//If we're passing the arc-length threshold, add a
+			//point at the proper coordinates. the while is to handle
+			//the stepping length being longer than the segment length
+			int n = 1;
+			while((newPos-pos).getSqrNorm()+length>=segmentLength) {
+				it = sampleLine.end();
+				Vector2f direction = newPos - pos;
+				direction.normalize();
+				pos = pos + direction*(segmentLength - length);
+				//Linear interpolation of the point?
+				sampleLine.insert(it,pos);
+				//Reset the length to the next point
+				length = 0;
+			}
+			//update the length we've traveled
+			length += newDistance;
+			//store the new position
+			pos = newPos;
 		} else {
 			done = true;
 		}
 		steps++;
 	}
 	done = false;
-	steps = 0;
+	maxLength = kernelValues.size()*segmentLength;
+	length = 0;
+	permanentLength=0;
+	
+	pos = startPoint;
 
-	while(!done && steps < maxSteps) {
-		it = line.begin();
-		Vector2f pos = line.front();
-
+	while(!done && steps < RKSteps && permanentLength<maxLength) {
+		
 		Vector2f newPos = RungeKuttaIntegration(pos,false);
+		//output << "forwards length " << length << "\n";
+		permanentLength += (newPos-pos).getSqrNorm();
 		//Discard conditions: out of bounds, too-low or zero magnitude
 		if(field.insideBounds(newPos)) {
-			line.insert(it,newPos);
 			if(field.sample(newPos).getSqrNorm()<minimumMagnitude) {
 				done = true;
 			}
+			
+			//If we're passing the arc-length threshold, add a
+			//point at the proper coordinates. the while is to handle
+			//the stepping length being longer than the segment length
+			while((newPos-pos).getSqrNorm()+length>=segmentLength) {
+				it = sampleLine.begin();
+				Vector2f direction = newPos - pos;
+				direction.normalize();
+				pos = pos + direction*(segmentLength - length);
+				//Linear interpolation of the point?
+				sampleLine.insert(it,pos);
+				//Reset the length to the next point
+				length = 0;
+			}
+			//update the length we've traveled
+			length += (newPos-pos).getSqrNorm();
+			//store the new position
+			pos = newPos;
 		} else {
 			done = true;
 		}
 		steps++;
 	}
+	//output << "line has length " << line.size() << "\n";
 
-	return line;
+	return sampleLine;
+}
+
+float Assignment6::convolveKernel(Vector2f startPoint, float segmentLength, vector<Vector2f> line) {
+	//This function assumes you've used the equidistant streamline method
+	int startIndex = find(line.begin(),line.end(),startPoint) - line.begin();
+	int kernelBoundaries = (int)kernelValues.size()/2;
+	float result = 0;
+	for(int i = 0; i<kernelValues.size(); i++) {
+		//Calculate the index for the line sample
+		int lineIndex = startIndex + i - kernelBoundaries;
+		//Correct for out-of-bounds
+		lineIndex = lineIndex < 0 ? 0 : lineIndex;
+		lineIndex = lineIndex > line.size()-1 ? line.size()-1 : lineIndex;
+
+		//Figure out what pixel said point belongs to:
+		Vector2ui pixelIndex = texture.closestNode(line[lineIndex]);
+		
+		//Perform the convolution and add to the result
+		result += kernelValues[i]*texture.nodeScalar(pixelIndex[0],pixelIndex[1]);
+	}
+	return result;
+}
+
+void Assignment6::ClassicLIC() {
+	
+	viewer->clear();
+	vector<vector<Vector2f>> foundLines;
+	vector<vector<Vector2f>> foundSampleLines;
+	vector<Vector2f> line;
+
+	LICtexture = texture;
+
+	float segmentLength = min((texture.nodePosition(0,0)-texture.nodePosition(1,0)).getSqrNorm(),(texture.nodePosition(0,0)-texture.nodePosition(0,1)).getSqrNorm());
+	GenerateKernel();
+
+	for(int x = 0; x < texture.dims()[0]; x++) {
+		for(int y = 0; y < texture.dims()[1]; y++) {
+			Vector2f startPoint = texture.nodePosition(x,y);
+			
+			line = GenerateStreamLineEquidistant(startPoint, segmentLength);
+			foundLines.push_back(line);
+			
+			LICtexture.setNodeScalar(x,y,convolveKernel(startPoint,segmentLength,line));
+			
+			viewer->setTextureGray(LICtexture.getData());
+			viewer->refresh();
+		}
+	}
+	/*for(int i = 0; i<foundLines.size(); i++) {
+		for(int j = 0; j<foundLines[i].size()-1;j++) {
+				viewer->addLine(foundLines[i][j],foundLines[i][j+1], makeVector4f(0,0,1,1));
+		}
+	}*/
+	
+	
 }

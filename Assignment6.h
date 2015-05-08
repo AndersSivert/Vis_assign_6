@@ -31,9 +31,14 @@ public:
 	void GenerateTexture();
 	void GenerateKernel();
 
-	vector<Vector2f> GenerateStreamLines(Vector2f startPoint);
-	vector<Vector2f> GenerateStreamLineKernelLength(Vector2f startPoint);
+	void ClassicLIC();
 
+	vector<Vector2f> GenerateStreamLines(Vector2f startPoint);
+	vector<Vector2f> GenerateStreamLineEquidistant(Vector2f startPoint, float segmentLength);
+
+	Vector2f lineParameterization(float segmentLength, float travelledLength, Vector2f startPoint, vector<Vector2f> line);
+
+	float convolveKernel(Vector2f startPoint, float segmentLength, vector<Vector2f> line);
 
 	Vector2f static GetFieldValue1(Vector2f pos);
 	Vector2f RungeKuttaIntegration(Vector2f pos);
@@ -84,6 +89,7 @@ public:
 
 	bool greyScale;
 	ScalarField2 texture;
+	ScalarField2 LICtexture;
 	vector<float> kernelValues;
 
 	//Texture resolutions
