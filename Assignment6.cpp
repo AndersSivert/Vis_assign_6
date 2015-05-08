@@ -82,7 +82,8 @@ Assignment6::Assignment6()
 	adjustSteps = 5;
 	maxAdjustment = 0.05;
 
-	colors.clear();
+	//Artifact --> consider removing?
+	/*colors.clear();
 	for(int i=0;i<5;i++) {
 		float c = (float)i/5;
 		float s = 0.3;
@@ -91,11 +92,14 @@ Assignment6::Assignment6()
 		float c3 = exp(- (c-1)*(c-1)/(2*s*s))/(s*sqrt(2*3.1415));
 		colors.push_back(makeVector4f(c1,c2,c3,1));
 	}
-	colorIndex = 0;
+	colorIndex = 0;*/
 }
 
 Assignment6::~Assignment6() {}
 
+/// Returns the next power of two
+///	Kudos to ExampleExperimentFields
+///	Unchanged --> consider importing instead?
 namespace
 {
     ///Returns the next power-of-two
@@ -181,10 +185,10 @@ void Assignment6::ReadFieldFromFile(){
 
 void Assignment6::DrawStreamLines()
 {
-	/*viewer->clear();
+	//viewer->clear();
 	if(!readField){
 		ReadFieldFromFile();
-	}*/
+	}
 	
 	float xMin = field.boundMin()[0];
 	float yMin = field.boundMin()[1];
