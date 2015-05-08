@@ -47,9 +47,9 @@ Assignment6::Assignment6()
     viewer = NULL;
     RungeKutta = false;
 
-	//fileName = "C:\\Users\\Martin\\Desktop\\GeoX\\Assignment05\\Data\\ANoise2CT4.am";				//Martin
-	fileName = "C:\Program Files\GeoX\experiments\Visualization\Assignment6\Data\ANoise2CT4.am";	//Anders
-	//fileName = "";																				//Jim
+	//fileName = "C:\\Users\\Martin\\Desktop\\GeoX\\Assignment05\\Data\\ANoise2CT4.am";					//Martin
+	fileName = "C:\\Program Files\\GeoX\\experiments\\Visualization\\Assignment6\\Data\\ANoise2CT4.am";	//Anders
+	//fileName = "";																					//Jim
 
 	randomPoints=false;
 	startingPoints="10";
