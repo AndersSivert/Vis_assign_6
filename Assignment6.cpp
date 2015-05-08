@@ -24,6 +24,7 @@ IMPLEMENT_GEOX_CLASS( Assignment6, 0)
 	ADD_BOOLEAN_PROP(greyScale,0)
 	ADD_INT32_PROP(xPowerOfTwo,0)
 	ADD_INT32_PROP(yPowerOfTwo,0)
+	ADD_INT32_PROP(textureSeed,0)
 
 
 	ADD_SEPARATOR("Runge-Kutta parameters")
@@ -62,6 +63,8 @@ Assignment6::Assignment6()
 	
 	xPowerOfTwo = 0;
 	yPowerOfTwo = 0;
+	
+	textureSeed = 0;
 
 	EulerSteps = 100;
 	EulerStepSize = 0.1;
@@ -421,6 +424,8 @@ void Assignment6::GenerateTexture() {
 	if(yPowerOfTwo>0) {
 		iHeight = pow(2.0,yPowerOfTwo);
 	}
+
+	srand(textureSeed);
 
 	texture.init(field.boundMin(),field.boundMax(),makeVector2ui(iWidth,iHeight));
 	if(greyScale) {

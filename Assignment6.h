@@ -87,6 +87,8 @@ public:
 	//Texture resolutions
 	int xPowerOfTwo;
 	int yPowerOfTwo;
+	//Seed for random
+	int textureSeed;
 
 protected:
     GLGeometryViewer* viewer;
