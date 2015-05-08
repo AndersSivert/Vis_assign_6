@@ -8,10 +8,10 @@
 
 #include "Field2.hpp"
 
-/// This is an example experiment.
+/// KTH DD2257 Visualization
+///	Assignment 6
 ///
-/// The code is meant to demonstrate how
-///  to use the GeoX framework
+/// Authors: Jim Eriksson, Martin Rockstrom, Anders Sivertsson
 ///
 class Assignment6 : public Experiment
 {
