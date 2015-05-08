@@ -170,10 +170,10 @@ void Assignment6::ReadFieldFromFile(){
 
 void Assignment6::DrawStreamLines()
 {
-	viewer->clear();
+	/*viewer->clear();
 	if(!readField){
 		ReadFieldFromFile();
-	}
+	}*/
 	
 	float xMin = field.boundMin()[0];
 	float yMin = field.boundMin()[1];
