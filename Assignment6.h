@@ -29,6 +29,9 @@ public:
 	void DrawStreamLines();
 
 	void GenerateTexture();
+	void GenerateKernel();
+
+	vector<Vector2f> GenerateStreamLines(Vector2f startPoint);
 
 	Vector2f static GetFieldValue1(Vector2f pos);
 	Vector2f RungeKuttaIntegration(Vector2f pos);
@@ -79,7 +82,7 @@ public:
 
 	bool greyScale;
 	ScalarField2 texture;
-
+	vector<float> kernelValues;
 
 protected:
     GLGeometryViewer* viewer;

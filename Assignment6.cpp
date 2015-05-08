@@ -46,9 +46,9 @@ Assignment6::Assignment6()
 {
     viewer = NULL;
     RungeKutta = false;
-	fileName = "C:\\Users\\Martin\\Desktop\\GeoX\\Assignment05\\Data\\ANoise2CT4.am";
+	fileName = "C:\\Users\\Martin\\Desktop\\GeoX\\Assignment06\\Data\\CylinderGerrisC2T15.am";
 	randomPoints=false;
-	startingPoints="1,0";
+	startingPoints="10";
 	readField = false;
 
 	EulerSteps = 100;
@@ -472,4 +472,60 @@ void Assignment6::GenerateTexture() {
 	}
 	viewer->setTextureGray(texture.getData());
 	viewer->refresh();
+}
+
+void Assignment6::GenerateKernel() {
+	kernelValues.clear();
+	//TODO: Implement different kernels, kernel sizes etc.
+	//Currently box kernel of size 5
+	for(int i=0;i<5;i++) {
+		kernelValues.push_back(1/5);
+	}
+}
+
+vector<Vector2f> Assignment6::GenerateStreamLines(Vector2f startPoint) {
+	vector<Vector2f> line;
+	line.push_back(startPoint);
+	bool done = false;
+	std::vector<Vector2f>::iterator it;
+	int steps = 0;
+	//Forwards interpolation:
+	while(!done && steps < RKSteps) {
+		it = line.end();
+		Vector2f pos = line.back();
+
+		Vector2f newPos = RungeKuttaIntegration(pos,true);
+		//Discard conditions: out of bounds, too-low or zero magnitude
+		if(field.insideBounds(newPos)) {
+			line.insert(it,newPos);
+			if(field.sample(newPos).getSqrNorm()<minimumMagnitude) {
+				done = true;
+			}
+		} else {
+			done = true;
+		}
+		steps++;
+	}
+	int stepsRemaining = RKSteps - steps;
+	done = false;
+	steps = 0;
+
+	while(!done && steps < stepsRemaining) {
+		it = line.begin();
+		Vector2f pos = line.front();
+
+		Vector2f newPos = RungeKuttaIntegration(pos,false);
+		//Discard conditions: out of bounds, too-low or zero magnitude
+		if(field.insideBounds(newPos)) {
+			line.insert(it,newPos);
+			if(field.sample(newPos).getSqrNorm()<minimumMagnitude) {
+				done = true;
+			}
+		} else {
+			done = true;
+		}
+		steps++;
+	}
+
+	return line;
 }
