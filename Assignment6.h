@@ -32,13 +32,15 @@ public:
 	void GenerateKernel();
 
 	void ClassicLIC();
+	void FastLIC();
 
 	vector<Vector2f> GenerateStreamLines(Vector2f startPoint);
 	vector<Vector2f> GenerateStreamLineEquidistant(Vector2f startPoint, float segmentLength);
+	vector<Vector2f> GenerateStreamLineEquidistantLong(Vector2f startPoint, float segmentLength);
 
-	Vector2f lineParameterization(float segmentLength, float travelledLength, Vector2f startPoint, vector<Vector2f> line);
-
-	float convolveKernel(Vector2f startPoint, float segmentLength, vector<Vector2f> line);
+	
+	float convolveKernel(int startIndex, vector<Vector2f> line);
+	
 
 	Vector2f static GetFieldValue1(Vector2f pos);
 	Vector2f RungeKuttaIntegration(Vector2f pos);
@@ -87,9 +89,16 @@ public:
 
 	VectorField2 field;
 
+	//Greyscale or B&W
 	bool greyScale;
+	//Textures: input and output respectively
 	ScalarField2 texture;
 	ScalarField2 LICtexture;
+	//Field to keep track of the visited pixels in fastLIC
+	ScalarField2 visited;
+
+	//Values for the generated kernel
+	int kernelLength;
 	vector<float> kernelValues;
 
 	//Texture resolutions
