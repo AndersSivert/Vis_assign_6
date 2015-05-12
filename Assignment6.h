@@ -48,6 +48,8 @@ public:
 	Vector2f EulerIntegration(Vector2f pos);
 	Vector2f EulerIntegration(Vector2f pos, bool forwards);
 
+	void EnhanceContrast();
+
     virtual QWidget* createViewer();
 
 protected:
@@ -94,6 +96,7 @@ public:
 	//Textures: input and output respectively
 	ScalarField2 texture;
 	ScalarField2 LICtexture;
+	ScalarField2 TEMPtexture;
 	//Field to keep track of the visited pixels in fastLIC
 	ScalarField2 visited;
 
@@ -106,6 +109,8 @@ public:
 	int yPowerOfTwo;
 	//Seed for random
 	int textureSeed;
+
+	bool ContrastEnhancement;
 
 protected:
     GLGeometryViewer* viewer;

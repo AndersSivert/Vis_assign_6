@@ -25,6 +25,7 @@ IMPLEMENT_GEOX_CLASS( Assignment6, 0)
 	ADD_INT32_PROP(xPowerOfTwo,0)
 	ADD_INT32_PROP(yPowerOfTwo,0)
 	ADD_INT32_PROP(textureSeed,0)
+	ADD_BOOLEAN_PROP(ContrastEnhancement,0)
 
 
 	ADD_SEPARATOR("Runge-Kutta parameters")
@@ -40,6 +41,7 @@ IMPLEMENT_GEOX_CLASS( Assignment6, 0)
 	ADD_NOARGS_METHOD(Assignment6::GenerateTexture)
 	ADD_NOARGS_METHOD(Assignment6::ClassicLIC)
 	ADD_NOARGS_METHOD(Assignment6::FastLIC)
+	ADD_NOARGS_METHOD(Assignment6::EnhanceContrast)
 	ADD_NOARGS_METHOD(Assignment6::DrawStreamLines)
 
 	
@@ -59,7 +61,7 @@ Assignment6::Assignment6()
     viewer = NULL;
     RungeKutta = false;
 
-	//fileName = "C:\\Users\\Martin\\Desktop\\GeoX\\Assignment05\\Data\\ANoise2CT4.am";					//Martin
+	fileName = "C:\\Users\\Martin\\Desktop\\GeoX\\Assignment05\\Data\\ANoise2CT4.am";					//Martin
 	//fileName = "C:\\Program Files\\GeoX\\experiments\\Visualization\\Assignment6\\Data\\ANoise2CT4.am";	//Anders
 	//fileName = "";																					//Jim
 
@@ -701,10 +703,10 @@ float Assignment6::convolveKernel(int startIndex, vector<Vector2f> line) {
 		lineIndex = lineIndex > line.size()-1 ? line.size()-1 : lineIndex;
 
 		//Figure out what pixel said point belongs to:
-		Vector2ui pixelIndex = texture.closestNode(line[lineIndex]);
+		Vector2ui pixelIndex = LICtexture.closestNode(line[lineIndex]);
 		
 		//Perform the convolution and add to the result
-		result += kernelValues[i]*texture.nodeScalar(pixelIndex[0],pixelIndex[1]);
+		result += kernelValues[i]*LICtexture.nodeScalar(pixelIndex[0],pixelIndex[1]);
 	}
 	return result;
 }
@@ -748,8 +750,10 @@ void Assignment6::FastLIC() {
 	vector<Vector2f> line;
 
 	LICtexture = texture;
+	TEMPtexture= texture;
 	float segmentLength = min((texture.nodePosition(0,0)-texture.nodePosition(1,0)).getSqrNorm(),(texture.nodePosition(0,0)-texture.nodePosition(0,1)).getSqrNorm());
 	GenerateKernel();
+	//int iterator = 0;
 
 	for(int x = 0; x < texture.dims()[0]; x++) {
 		for(int y = 0; y < texture.dims()[1]; y++) {
@@ -768,23 +772,62 @@ void Assignment6::FastLIC() {
 				//add one to the visit-counter for this pixel
 				visited.setNodeScalar(pixel[0],pixel[1],visited.nodeScalar(pixel[0],pixel[1])+1);
 				//convolve the kernel for this part of the line, and add it to the total of that pixel
-				LICtexture.setNodeScalar(pixel[0],pixel[1],
-					LICtexture.nodeScalar(pixel[0],pixel[1]) + convolveKernel(n,line));
+				LICtexture.setNodeScalar(pixel[0],pixel[1], convolveKernel(n,line));
+				//	LICtexture.nodeScalar(pixel[0],pixel[1]) + convolveKernel(n,line));
 				
+				//TEMPtexture.setNodeScalar(pixel[0],pixel[1],LICtexture.nodeScalar(pixel[0],pixel[1])/visited.nodeScalar(pixel[0],pixel[1]));
+					
 				
-			}
+			} 
 		}
 	}
 	//Adjust the values
-	float value;
+	/*float value;
 	for(int x = 0; x < texture.dims()[0]; x++) {
 		for(int y = 0; y < texture.dims()[1]; y++) {
 			value = (LICtexture.nodeScalar(x,y)-texture.nodeScalar(x,y))/visited.nodeScalar(x,y);
 			LICtexture.setNodeScalar(x,y,value);
 			visited.setNodeScalar(x,y,0.0);
 		}
+	}*/
+	if(ContrastEnhancement) {
+		EnhanceContrast();
+	} else {
+		viewer->setTextureGray(LICtexture.getData());
+		viewer->refresh();
+	}
+}
+
+void Assignment6::EnhanceContrast() {
+	int n = 0;
+	float P = 0;
+	float mu = 0;
+	for(int x = 0; x < LICtexture.dims()[0];x++) {
+		for(int y = 0; y < LICtexture.dims()[1];y++) {
+			float p = LICtexture.nodeScalar(x,y);
+			//if(p>0){
+				n++;
+				P += p*p;
+				mu += p;
+			//}
+		}
+	}
+	if(n<=1) {
+		return;
+	}
+	mu = mu/n;
+	float sd = sqrt((P-n*mu*mu)/(n-1));
+
+	float stretching = (0.1/sd < 1) ? 0.1/sd : 1;
+
+	for(int x = 0; x < LICtexture.dims()[0];x++) {
+		for(int y = 0; y < LICtexture.dims()[1];y++) {
+			float p = LICtexture.nodeScalar(x,y);
+			LICtexture.setNodeScalar(x,y,0.5 + stretching*(p-mu));
+		}
 	}
 
 	viewer->setTextureGray(LICtexture.getData());
 	viewer->refresh();
+
 }
