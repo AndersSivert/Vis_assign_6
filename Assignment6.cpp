@@ -26,8 +26,6 @@ IMPLEMENT_GEOX_CLASS( Assignment6, 0)
 	ADD_INT32_PROP(yPowerOfTwo,0)
 	ADD_INT32_PROP(textureSeed,0)
 	ADD_BOOLEAN_PROP(ContrastEnhancement,0)
-	ADD_FLOAT32_PROP(DesiredMean,0)
-	ADD_FLOAT32_PROP(DesiredDeviation,0)
 
 
 	ADD_SEPARATOR("Runge-Kutta parameters")
@@ -94,9 +92,6 @@ Assignment6::Assignment6()
 
 	kernelLength = 10;
 
-	ContrastEnhancement = false;
-	DesiredMean = 0.5;
-	DesiredDeviation = 0.1;
 }
 
 Assignment6::~Assignment6() {}
@@ -619,11 +614,10 @@ vector<Vector2f> Assignment6::GenerateStreamLineEquidistantLong(Vector2f startPo
 	std::vector<Vector2f>::iterator it;
 	float length = 0;
 	int steps = 0;
-	int points = 0;
 	Vector2f pos = startPoint;
 
 	//Forwards interpolation:
-	while(!done && steps < RKSteps && points < RKSteps) {
+	while(!done && steps < RKSteps) {
 		
 		Vector2f newPos = RungeKuttaIntegration(pos,true);
 		
@@ -636,7 +630,7 @@ vector<Vector2f> Assignment6::GenerateStreamLineEquidistantLong(Vector2f startPo
 			//If we're passing the arc-length threshold, add a
 			//point at the proper coordinates. the while is to handle
 			//the stepping length being longer than the segment length
-			while((newPos-pos).getSqrNorm()+length>=segmentLength && points < RKSteps) {
+			while((newPos-pos).getSqrNorm()+length>=segmentLength) {
 				it = sampleLine.end();
 				Vector2f direction = newPos - pos;
 				direction.normalize();
@@ -645,7 +639,6 @@ vector<Vector2f> Assignment6::GenerateStreamLineEquidistantLong(Vector2f startPo
 				sampleLine.insert(it,pos);
 				//Reset the length to the next point
 				length = 0;
-				points += 1;
 			}
 			//update the length we've traveled
 			length += (newPos-pos).getSqrNorm();
@@ -658,11 +651,10 @@ vector<Vector2f> Assignment6::GenerateStreamLineEquidistantLong(Vector2f startPo
 	}
 	done = false;
 	length = 0;
-	points = 0;
 	
 	pos = startPoint;
 
-	while(!done && steps < RKSteps && points < RKSteps) {
+	while(!done && steps < RKSteps ) {
 		
 		Vector2f newPos = RungeKuttaIntegration(pos,false);
 		//Discard conditions: out of bounds, too-low or zero magnitude
@@ -674,7 +666,7 @@ vector<Vector2f> Assignment6::GenerateStreamLineEquidistantLong(Vector2f startPo
 			//If we're passing the arc-length threshold, add a
 			//point at the proper coordinates. the while is to handle
 			//the stepping length being longer than the segment length
-			while((newPos-pos).getSqrNorm()+length>=segmentLength && points < RKSteps) {
+			while((newPos-pos).getSqrNorm()+length>=segmentLength) {
 				it = sampleLine.begin();
 				Vector2f direction = newPos - pos;
 				direction.normalize();
@@ -683,7 +675,6 @@ vector<Vector2f> Assignment6::GenerateStreamLineEquidistantLong(Vector2f startPo
 				sampleLine.insert(it,pos);
 				//Reset the length to the next point
 				length = 0;
-				points += 1;
 			}
 			//update the length we've traveled
 			length += (newPos-pos).getSqrNorm();
@@ -814,11 +805,11 @@ void Assignment6::EnhanceContrast() {
 	for(int x = 0; x < LICtexture.dims()[0];x++) {
 		for(int y = 0; y < LICtexture.dims()[1];y++) {
 			float p = LICtexture.nodeScalar(x,y);
-			if(p>0){
+			//if(p>0){
 				n++;
 				P += p*p;
 				mu += p;
-			}
+			//}
 		}
 	}
 	if(n<=1) {
@@ -827,12 +818,12 @@ void Assignment6::EnhanceContrast() {
 	mu = mu/n;
 	float sd = sqrt((P-n*mu*mu)/(n-1));
 
-	float stretching = (DesiredDeviation/sd < 1) ? DesiredDeviation/sd : 1;
+	float stretching = (0.1/sd < 1) ? 0.1/sd : 1;
 
 	for(int x = 0; x < LICtexture.dims()[0];x++) {
 		for(int y = 0; y < LICtexture.dims()[1];y++) {
 			float p = LICtexture.nodeScalar(x,y);
-			LICtexture.setNodeScalar(x,y,DesiredMean + stretching*(p-mu));
+			LICtexture.setNodeScalar(x,y,0.5 + stretching*(p-mu));
 		}
 	}
 

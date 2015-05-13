@@ -111,8 +111,6 @@ public:
 	int textureSeed;
 
 	bool ContrastEnhancement;
-	float DesiredMean;
-	float DesiredDeviation;
 
 protected:
     GLGeometryViewer* viewer;
