@@ -34,7 +34,7 @@ public:
 	void ClassicLIC();
 	void FastLIC();
 
-	vector<Vector2f> GenerateStreamLines(Vector2f startPoint);
+	vector<Vector2f> GenerateStreamLines(Vector2f startPoint, int pointNumber);
 	vector<Vector2f> GenerateStreamLineEquidistant(Vector2f startPoint, float segmentLength);
 	vector<Vector2f> GenerateStreamLineEquidistantLong(Vector2f startPoint, float segmentLength);
 

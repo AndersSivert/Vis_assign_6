@@ -32,7 +32,7 @@ IMPLEMENT_GEOX_CLASS( Assignment6, 0)
 
 	ADD_SEPARATOR("Runge-Kutta parameters")
 	ADD_INT32_PROP(RKSteps,0)
-	ADD_FLOAT32_PROP(RKStepSize,0)
+	//ADD_FLOAT32_PROP(RKStepSize,0)
 	ADD_FLOAT32_PROP(minimumMagnitude,0)
 	
 	ADD_SEPARATOR("Kernel parameters")
@@ -83,7 +83,7 @@ Assignment6::Assignment6()
 	RKStepSize = 0.1;
 
 	maxLength = 10;
-	directionField = false;
+	directionField = true;
 	magnitudeColor = false;
 	showPoints = true;
 	grid = true;
@@ -457,7 +457,7 @@ void Assignment6::GenerateTexture() {
 	}
 	output << "segment length 1: " << min((texture.boundMax()[0] - texture.boundMin()[0])/iWidth,(texture.boundMax()[1] - texture.boundMin()[1])/iHeight) << "\n";
 	output << "segment length 2: " << min((texture.nodePosition(0,0)-texture.nodePosition(1,0)).getSqrNorm(),(texture.nodePosition(0,0)-texture.nodePosition(0,1)).getSqrNorm()) << "\n";
-
+	RKStepSize = min((texture.boundMax()[0] - texture.boundMin()[0])/iWidth,(texture.boundMax()[1] - texture.boundMin()[1])/iHeight);
 	viewer->setTextureGray(texture.getData());
 	viewer->refresh();
 }
@@ -471,7 +471,7 @@ void Assignment6::GenerateKernel() {
 	}
 }
 
-vector<Vector2f> Assignment6::GenerateStreamLines(Vector2f startPoint) {
+vector<Vector2f> Assignment6::GenerateStreamLines(Vector2f startPoint, int pointNumber) {
 	vector<Vector2f> line;
 	line.push_back(startPoint);
 	bool done = false;
@@ -479,7 +479,7 @@ vector<Vector2f> Assignment6::GenerateStreamLines(Vector2f startPoint) {
 	int steps = 0;
 	
 	//Forwards interpolation:
-	while(!done && steps < RKSteps) {
+	while(!done && steps < pointNumber) {
 		it = line.end();
 		Vector2f pos = line.back();
 
@@ -495,11 +495,11 @@ vector<Vector2f> Assignment6::GenerateStreamLines(Vector2f startPoint) {
 		}
 		steps++;
 	}
-	int stepsRemaining = RKSteps - steps;
+	//int stepsRemaining = RKSteps - steps;
 	done = false;
 	steps = 0;
 
-	while(!done && steps < stepsRemaining) {
+	while(!done && steps < pointNumber) {
 		it = line.begin();
 		Vector2f pos = line.front();
 
@@ -712,10 +712,10 @@ float Assignment6::convolveKernel(int startIndex, vector<Vector2f> line) {
 		lineIndex = lineIndex > line.size()-1 ? line.size()-1 : lineIndex;
 
 		//Figure out what pixel said point belongs to:
-		Vector2ui pixelIndex = LICtexture.closestNode(line[lineIndex]);
+		Vector2ui pixelIndex = texture.closestNode(line[lineIndex]);
 		
 		//Perform the convolution and add to the result
-		result += kernelValues[i]*LICtexture.nodeScalar(pixelIndex[0],pixelIndex[1]);
+		result += kernelValues[i]*texture.nodeScalar(pixelIndex[0],pixelIndex[1]);
 	}
 	return result;
 }
@@ -731,18 +731,19 @@ void Assignment6::ClassicLIC() {
 
 	float segmentLength = min((texture.nodePosition(0,0)-texture.nodePosition(1,0)).getSqrNorm(),(texture.nodePosition(0,0)-texture.nodePosition(0,1)).getSqrNorm());
 	GenerateKernel();
+	int kernelHalf = (int)kernelLength/2;
 
 	for(int x = 0; x < texture.dims()[0]; x++) {
 		for(int y = 0; y < texture.dims()[1]; y++) {
 			Vector2f startPoint = texture.nodePosition(x,y);
 			
-			line = GenerateStreamLineEquidistant(startPoint, segmentLength);
+			line = GenerateStreamLines(startPoint, kernelLength);
 			foundLines.push_back(line);
 			int startIndex = find(line.begin(),line.end(),startPoint) - line.begin();
 			LICtexture.setNodeScalar(x,y,convolveKernel(startIndex,line));
 			
-			viewer->setTextureGray(LICtexture.getData());
-			viewer->refresh();
+			//viewer->setTextureGray(LICtexture.getData());
+			//viewer->refresh();
 		}
 	}
 	/*for(int i = 0; i<foundLines.size(); i++) {
@@ -750,6 +751,12 @@ void Assignment6::ClassicLIC() {
 				viewer->addLine(foundLines[i][j],foundLines[i][j+1], makeVector4f(0,0,1,1));
 		}
 	}*/
+	if(ContrastEnhancement) {
+		EnhanceContrast();
+	} else {
+		viewer->setTextureGray(LICtexture.getData());
+		viewer->refresh();
+	}
 }
 
 void Assignment6::FastLIC() {
@@ -771,7 +778,7 @@ void Assignment6::FastLIC() {
 				continue;
 			}
 			//calculate the streamline
-			line = GenerateStreamLineEquidistantLong(texture.nodePosition(x,y), segmentLength);
+			line = GenerateStreamLines(texture.nodePosition(x,y), RKSteps);
 			foundLines.push_back(line);
 		
 			//move kernel along line
@@ -781,8 +788,8 @@ void Assignment6::FastLIC() {
 				//add one to the visit-counter for this pixel
 				visited.setNodeScalar(pixel[0],pixel[1],visited.nodeScalar(pixel[0],pixel[1])+1);
 				//convolve the kernel for this part of the line, and add it to the total of that pixel
-				LICtexture.setNodeScalar(pixel[0],pixel[1], convolveKernel(n,line));
-				//	LICtexture.nodeScalar(pixel[0],pixel[1]) + convolveKernel(n,line));
+				LICtexture.setNodeScalar(pixel[0],pixel[1], 
+					LICtexture.nodeScalar(pixel[0],pixel[1]) + convolveKernel(n,line));
 				
 				//TEMPtexture.setNodeScalar(pixel[0],pixel[1],LICtexture.nodeScalar(pixel[0],pixel[1])/visited.nodeScalar(pixel[0],pixel[1]));
 					
@@ -791,14 +798,14 @@ void Assignment6::FastLIC() {
 		}
 	}
 	//Adjust the values
-	/*float value;
+	float value;
 	for(int x = 0; x < texture.dims()[0]; x++) {
 		for(int y = 0; y < texture.dims()[1]; y++) {
 			value = (LICtexture.nodeScalar(x,y)-texture.nodeScalar(x,y))/visited.nodeScalar(x,y);
 			LICtexture.setNodeScalar(x,y,value);
 			visited.setNodeScalar(x,y,0.0);
 		}
-	}*/
+	}
 	if(ContrastEnhancement) {
 		EnhanceContrast();
 	} else {
@@ -827,7 +834,7 @@ void Assignment6::EnhanceContrast() {
 	mu = mu/n;
 	float sd = sqrt((P-n*mu*mu)/(n-1));
 
-	float stretching = (DesiredDeviation/sd < 1) ? DesiredDeviation/sd : 1;
+	float stretching = DesiredDeviation/sd;// < 1) ? DesiredDeviation/sd : 1;
 
 	for(int x = 0; x < LICtexture.dims()[0];x++) {
 		for(int y = 0; y < LICtexture.dims()[1];y++) {
