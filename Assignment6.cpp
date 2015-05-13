@@ -26,8 +26,8 @@ IMPLEMENT_GEOX_CLASS( Assignment6, 0)
 	ADD_INT32_PROP(yPowerOfTwo,0)
 	ADD_INT32_PROP(textureSeed,0)
 	ADD_BOOLEAN_PROP(ContrastEnhancement,0)
-	ADD_FLOAT32_PROP(DesiredMean,0)
-	ADD_FLOAT32_PROP(DesiredDeviation,0)
+	ADD_FLOAT32_PROP(DesiredMean,0)			//why??
+	ADD_FLOAT32_PROP(DesiredDeviation,0)	//why??
 
 
 	ADD_SEPARATOR("Runge-Kutta parameters")
@@ -63,27 +63,30 @@ Assignment6::Assignment6()
     viewer = NULL;
     RungeKutta = false;
 
-	fileName = "C:\\Users\\Martin\\Desktop\\GeoX\\Assignment05\\Data\\ANoise2CT4.am";					//Martin
-	//fileName = "C:\\Program Files\\GeoX\\experiments\\Visualization\\Assignment6\\Data\\ANoise2CT4.am";	//Anders
+	/// Path names on different computers
+	//fileName = "C:\\Users\\Martin\\Desktop\\GeoX\\Assignment05\\Data\\ANoise2CT4.am";					//Martin
+	fileName = "C:\\Program Files\\GeoX\\experiments\\Visualization\\Assignment6\\Data\\ANoise2CT4.am";	//Anders
 	//fileName = "";																					//Jim
 
-	randomPoints=false;
-	startingPoints="10";
-	readField = false;
+	randomPoints=false;		//For randomly selected start points
+	startingPoints="10";	//no. of start points
+	readField = false;		
 	
-	xPowerOfTwo = 0;
-	yPowerOfTwo = 0;
+	xPowerOfTwo = 256;
+	yPowerOfTwo = 256;
 	
 	textureSeed = 0;
 
+	//no. of steps and stepsize (Euler)
 	EulerSteps = 100;
 	EulerStepSize = 0.1;
 	
+	//no. of steps and stepsize (Runge-Kutta)
 	RKSteps = 100;
 	RKStepSize = 0.1;
 
 	maxLength = 10;
-	directionField = false;
+	directionField = false;	//!Direction field not implemented - waste of code
 	magnitudeColor = false;
 	showPoints = true;
 	grid = true;
@@ -92,7 +95,7 @@ Assignment6::Assignment6()
 	adjustSteps = 5;
 	maxAdjustment = 0.05;
 
-	kernelLength = 10;
+	kernelLength = 10; //Length of kernel
 
 	ContrastEnhancement = false;
 	DesiredMean = 0.5;
@@ -133,6 +136,8 @@ Vector2f Assignment6::EulerIntegration(Vector2f pos, bool forwards) {
 	} else {
 		dt = -EulerStepSize;
 	}
+
+	///Direction field not implemented - waste of code
 	if(directionField){
 		Vector2f sampled =field.sample(pos[0],pos[1]);
 		sampled.normalize();
@@ -157,6 +162,7 @@ Vector2f Assignment6::RungeKuttaIntegration(Vector2f pos, bool forwards) {
 		dt = -RKStepSize;
 	}
 
+	///Direction field not implemented - waste of code
 	if(directionField) {
 		Vector2f p1 =  field.sample(pos[0],pos[1]);
 		p1.normalize();
