@@ -176,8 +176,22 @@ void Assignment7::ReadFieldFromFile(){
 }
 
 bool Assignment7::IsZeroPossible(int x, int y) {
-	//TODO: THIS IS PLACEHOLDER
-	return false;
+	bool xDiff = false;
+	bool yDiff = false;
+	for(int i = x; i<x+2; i++) {
+		for(int j = y; j<y+2; j++) {
+			if(vField.node(x,y)[0]*vField.node(i,j)[0]<=0) {
+				xDiff = true;
+			}
+			if(vField.node(x,y)[1]*vField.node(i,j)[1]<=0) {
+				yDiff = true;
+			}
+		}
+	}
+
+
+
+	return (xDiff&&yDiff);
 }
 Vector2f Assignment7::FindZero(int x, int y) {
 	//TODO: THIS IS PLACEHOLDER
