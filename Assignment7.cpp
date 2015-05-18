@@ -96,7 +96,7 @@ Assignment7::Assignment7()
 	DesiredDeviation = 0.1;
 
 	ZeroThreshold = 0.00001;
-	ClassifyCriticals = false;
+	ClassifyCriticals = true;
 
 }
 
@@ -188,6 +188,53 @@ void Assignment7::CriticalPoints() {
 	}
 	FindCriticalPoints();
 	if(ClassifyCriticals) {
+		ClassifyCriticalPoints();
+		for(int i = 0; i < Source.size();i++) {
+			Point2D point(Source[i][0],Source[i][1]);
+			point.color = makeVector4f(1,0,0,1);
+			//point.size = 20;
+			viewer->addPoint(point);
+			viewer->refresh();
+		}
+		for(int i = 0; i < FocusRepelling.size();i++) {
+			Point2D point(FocusRepelling[i][0],FocusRepelling[i][1]);
+			point.color = makeVector4f(1,0.5,0,1);
+			//point.size = 20;
+			viewer->addPoint(point);
+			viewer->refresh();
+
+		}
+		for(int i = 0; i < Saddle.size();i++) {
+			Point2D point(Saddle[i][0],Saddle[i][1]);
+			point.color = makeVector4f(1,1,0,1);
+			//point.size = 20;
+			viewer->addPoint(point);
+			viewer->refresh();
+
+		}
+		for(int i = 0; i < Center.size();i++) {
+			Point2D point(Center[i][0],Center[i][1]);
+			point.color = makeVector4f(0,1,0,1);
+			//point.size = 20;
+			viewer->addPoint(point);
+			viewer->refresh();
+		}
+		for(int i = 0; i < Sink.size();i++) {
+			Point2D point(Sink[i][0],Sink[i][1]);
+			point.color = makeVector4f(0,0,1,1);
+			//point.size = 20;
+			viewer->addPoint(point);
+			viewer->refresh();
+
+		}
+		for(int i = 0; i < FocusAttracting.size();i++) {
+			Point2D point(FocusAttracting[i][0],FocusAttracting[i][1]);
+			point.color = makeVector4f(1,0,1,1);
+			//point.size = 20;
+			viewer->addPoint(point);
+			viewer->refresh();
+
+		}
 		//TODO: Implement this
 	} else {
 		output << "found points: " << AllCriticals.size() << "\n";
@@ -291,7 +338,44 @@ void Assignment7::FindCriticalPoints() {
 }
 
 void Assignment7::ClassifyCriticalPoints() {
-	//TODO:Implement this method
+	Source.clear();
+	FocusRepelling.clear();
+	Saddle.clear();
+	Center.clear();
+	Sink.clear();
+	FocusAttracting.clear();
+
+	for(int n = 0; n < AllCriticals.size(); n++) {
+		Matrix2f Jacobian = vField.sampleJacobian(AllCriticals[n]);
+		Vector2f Real;
+		Vector2f Imaginary;
+		Matrix2f vectors;
+		Jacobian.solveEigenProblem(Real,Imaginary,vectors);
+		if((Imaginary[0]==0)&&(Imaginary[1]==0)) { //Attracting, repelling and saddle
+
+			if(Real[0]*Real[1]<0) {
+				//Saddle, different sign on the real values
+				Saddle.push_back(AllCriticals[n]);
+			} else if(Real[0]<0) {
+				//Source, both less than zero
+				Source.push_back(AllCriticals[n]);
+			} else if(Real[0]>0) {
+				//Sink, both greater than zero
+				Sink.push_back(AllCriticals[n]);
+			} //If one or both are zero, then the theory doesn't tell us what it is
+		} else {
+			if(Real[0]>0) {
+				//Repelling focus, real values greater than zero
+				FocusRepelling.push_back(AllCriticals[n]);
+			} else if(Real[0]<0) {
+				//Attracting focus, real values greater than zero
+				FocusAttracting.push_back(AllCriticals[n]);
+			} else {
+				//Center, real values zero
+				Center.push_back(AllCriticals[n]);
+			}
+		}
+	}
 }
 
 void Assignment7::ComputeSeparatrices() {
