@@ -174,7 +174,7 @@ void Assignment7::ReadFieldFromFile(){
 	}
 
 }
-/*
+
 bool Assignment7::IsZeroPossible(int x, int y) {
 	bool xDiff = false;
 	bool yDiff = false;
@@ -189,7 +189,7 @@ bool Assignment7::IsZeroPossible(int x, int y) {
 		}
 	}
 	return (xDiff&&yDiff);
-}*/
+}
 bool Assignment7::IsZeroPossible(vector<Vector2f> points) {
 	bool xDiff = false;
 	bool yDiff = false;
@@ -210,6 +210,7 @@ void Assignment7::FindZero(vector<Vector2f> points) {
 	}
 	middle = middle/points.size();
 	if(vField.sample(middle).getSqrNorm()<ZeroThreshold) {
+		//Found a zero! put it with the others
 		AllCriticals.push_back(middle);
 	} else {
 		for(int i = 0; i<points.size();i++) {
@@ -218,7 +219,7 @@ void Assignment7::FindZero(vector<Vector2f> points) {
 			newPoints.push_back(points[i]);
 			newPoints.push_back(makeVector2f(middle[0],points[i][1]));
 			newPoints.push_back(makeVector2f(points[i][0],middle[1]));
-			if(IsZeroPossible(newPoints) {
+			if(IsZeroPossible(newPoints)) {
 				FindZero(newPoints);
 			}
 		}
@@ -226,7 +227,21 @@ void Assignment7::FindZero(vector<Vector2f> points) {
 }
 
 void Assignment7::FindCriticalPoints() {
-	//TODO:Implement this method
+	//For every cell...
+	for(int x = 0; x<vField.dims()[0]-1;x++) {
+		for(int y = 0; y<vField.dims()[1]-1;y++) {
+			//Check if the cell possibly could contain a zero
+			if(IsZeroPossible(x,y)) {
+				//If so, find it
+				vector<Vector2f> points;
+				points.push_back(vField.nodePosition(x,y));
+				points.push_back(vField.nodePosition(x+1,y));
+				points.push_back(vField.nodePosition(x,y+1));
+				points.push_back(vField.nodePosition(x+1,y+1));
+				FindZero(points);
+			}
+		}
+	}
 }
 
 void Assignment7::ClassifyCriticalPoints() {

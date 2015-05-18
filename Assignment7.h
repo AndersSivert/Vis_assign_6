@@ -27,7 +27,7 @@ public:
 	void ReadFieldFromFile();
 
 	//Domain Decomposition and Change-Of-Sign test:
-	//bool IsZeroPossible(int x, int y);
+	bool IsZeroPossible(int x, int y);
 	//Vector2f FindZero(int x, int y);
 	bool IsZeroPossible(vector<Vector2f> points);
 	void FindZero(vector<Vector2f> points);
