@@ -27,9 +27,10 @@ public:
 	void ReadFieldFromFile();
 
 	//Domain Decomposition and Change-Of-Sign test:
-	//Input values are the lowest-indexed corner of the cell
-	bool IsZeroPossible(int x, int y);
-	Vector2f FindZero(int x, int y);
+	//bool IsZeroPossible(int x, int y);
+	//Vector2f FindZero(int x, int y);
+	bool IsZeroPossible(vector<Vector2f> points);
+	void FindZero(vector<Vector2f> points);
 
 	void FindCriticalPoints();
 	void ClassifyCriticalPoints();
@@ -87,6 +88,8 @@ public:
 	VectorField2 vField;
 	ScalarField2 sField;
 
+	//Zero-finding threshold
+
 	//Storing the critical points
 	vector<Vector2f> AllCriticals;
 	
@@ -96,6 +99,9 @@ public:
 	vector<Vector2f> Center;
 	vector<Vector2f> Sink;
 	vector<Vector2f> FocusAttracting;
+
+	//Threshold value for finding zeroes
+	float ZeroThreshold;
 
 	//LIC texture parameters:
 	//Greyscale or B&W

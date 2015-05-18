@@ -174,7 +174,7 @@ void Assignment7::ReadFieldFromFile(){
 	}
 
 }
-
+/*
 bool Assignment7::IsZeroPossible(int x, int y) {
 	bool xDiff = false;
 	bool yDiff = false;
@@ -188,16 +188,41 @@ bool Assignment7::IsZeroPossible(int x, int y) {
 			}
 		}
 	}
-
-
-
+	return (xDiff&&yDiff);
+}*/
+bool Assignment7::IsZeroPossible(vector<Vector2f> points) {
+	bool xDiff = false;
+	bool yDiff = false;
+	for(int i = 1; i<points.size();i++) {
+		if(points[0][0]*points[i][0]<=0) {
+			xDiff = true;
+		}
+		if(points[0][1]*points[i][1]<=0) {
+			yDiff = true;
+		}
+	}
 	return (xDiff&&yDiff);
 }
-Vector2f Assignment7::FindZero(int x, int y) {
-	//TODO: THIS IS PLACEHOLDER
-	Vector2f result;
-	result.setZero();
-	return result;
+void Assignment7::FindZero(vector<Vector2f> points) {
+	Vector2f middle;
+	for(int i = 0; i<points.size();i++) {
+		middle += points[i];
+	}
+	middle = middle/points.size();
+	if(vField.sample(middle).getSqrNorm()<ZeroThreshold) {
+		AllCriticals.push_back(middle);
+	} else {
+		for(int i = 0; i<points.size();i++) {
+			vector<Vector2f> newPoints;
+			newPoints.push_back(middle);
+			newPoints.push_back(points[i]);
+			newPoints.push_back(makeVector2f(middle[0],points[i][1]));
+			newPoints.push_back(makeVector2f(points[i][0],middle[1]));
+			if(IsZeroPossible(newPoints) {
+				FindZero(newPoints);
+			}
+		}
+	}
 }
 
 void Assignment7::FindCriticalPoints() {
