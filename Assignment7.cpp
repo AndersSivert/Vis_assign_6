@@ -28,7 +28,7 @@ IMPLEMENT_GEOX_CLASS( Assignment7, 0)
 	ADD_BOOLEAN_PROP(ContrastEnhancement,0)
 	ADD_FLOAT32_PROP(DesiredMean,0)
 	ADD_FLOAT32_PROP(DesiredDeviation,0)
-
+	
 
 	ADD_SEPARATOR("Runge-Kutta parameters")
 	ADD_INT32_PROP(RKSteps,0)
@@ -40,10 +40,11 @@ IMPLEMENT_GEOX_CLASS( Assignment7, 0)
 
 	
 	ADD_NOARGS_METHOD(Assignment7::ReadFieldFromFile)
+	ADD_NOARGS_METHOD(Assignment7::CriticalPoints)
 	ADD_NOARGS_METHOD(Assignment7::GenerateTexture)
-	ADD_NOARGS_METHOD(Assignment7::ClassicLIC)
+	//ADD_NOARGS_METHOD(Assignment7::ClassicLIC)
 	ADD_NOARGS_METHOD(Assignment7::FastLIC)
-	ADD_NOARGS_METHOD(Assignment7::EnhanceContrast)
+	//ADD_NOARGS_METHOD(Assignment7::EnhanceContrast)
 
 	
 	
@@ -61,7 +62,7 @@ Assignment7::Assignment7()
 {
     viewer = NULL;
 
-	fileName = "";		//Martin
+	fileName = "C:\\Users\\Martin\\Desktop\\GeoX\\Assignment07\\Data\\Vector\\ANoise2CT4.am";		//Martin
 	//fileName = "";	//Anders
 	//fileName = "";	//Jim
 
@@ -93,6 +94,10 @@ Assignment7::Assignment7()
 	ContrastEnhancement = false;
 	DesiredMean = 0.5;
 	DesiredDeviation = 0.1;
+
+	ZeroThreshold = 0.00001;
+	ClassifyCriticals = false;
+
 }
 
 Assignment7::~Assignment7() {}
@@ -175,6 +180,30 @@ void Assignment7::ReadFieldFromFile(){
 
 }
 
+void Assignment7::CriticalPoints() {
+	//viewer->clear();
+	AllCriticals.clear();
+	if(!readField) {
+		ReadFieldFromFile();
+	}
+	FindCriticalPoints();
+	if(ClassifyCriticals) {
+		//TODO: Implement this
+	} else {
+		output << "found points: " << AllCriticals.size() << "\n";
+		for(int i = 0; i<AllCriticals.size(); i++) {
+			output << "drawing point number: " << i << "\n";
+			output << "at coordinates " << AllCriticals[i][0]<<","<<AllCriticals[i][1]<<"\n";
+			Point2D point(AllCriticals[i][0],AllCriticals[i][1]);
+			//point.position = AllCriticals[i];
+			point.color = makeVector4f(1,0,0,1);
+			//point.size = 20;
+			viewer->addPoint(point);
+			viewer->refresh();
+		}
+	}
+}
+
 bool Assignment7::IsZeroPossible(int x, int y) {
 	bool xDiff = false;
 	bool yDiff = false;
@@ -193,25 +222,29 @@ bool Assignment7::IsZeroPossible(int x, int y) {
 bool Assignment7::IsZeroPossible(vector<Vector2f> points) {
 	bool xDiff = false;
 	bool yDiff = false;
+	Vector2f startVector = vField.sample(points[0]);
 	for(int i = 1; i<points.size();i++) {
-		if(points[0][0]*points[i][0]<=0) {
+		Vector2f fieldVector = vField.sample(points[i]);
+		if(startVector[0]*fieldVector[0]<=0) {
 			xDiff = true;
 		}
-		if(points[0][1]*points[i][1]<=0) {
+		if(startVector[1]*fieldVector[1]<=0) {
 			yDiff = true;
 		}
+		
 	}
 	return (xDiff&&yDiff);
 }
 void Assignment7::FindZero(vector<Vector2f> points) {
-	Vector2f middle;
-	for(int i = 0; i<points.size();i++) {
+	Vector2f middle = points[0];
+	for(int i = 1; i<points.size();i++) {
 		middle += points[i];
 	}
 	middle = middle/points.size();
+
 	if(vField.sample(middle).getSqrNorm()<ZeroThreshold) {
 		//Found a zero! put it with the others
-		AllCriticals.push_back(middle);
+		foundCriticals.push_back(middle);
 	} else {
 		for(int i = 0; i<points.size();i++) {
 			vector<Vector2f> newPoints;
@@ -227,11 +260,15 @@ void Assignment7::FindZero(vector<Vector2f> points) {
 }
 
 void Assignment7::FindCriticalPoints() {
+	output<< "start \n";
 	//For every cell...
 	for(int x = 0; x<vField.dims()[0]-1;x++) {
 		for(int y = 0; y<vField.dims()[1]-1;y++) {
+			output << "Checking cell "<< x << "," << y << "\n";
 			//Check if the cell possibly could contain a zero
 			if(IsZeroPossible(x,y)) {
+				foundCriticals.clear();
+				output << "Zero possible\n";
 				//If so, find it
 				vector<Vector2f> points;
 				points.push_back(vField.nodePosition(x,y));
@@ -239,6 +276,15 @@ void Assignment7::FindCriticalPoints() {
 				points.push_back(vField.nodePosition(x,y+1));
 				points.push_back(vField.nodePosition(x+1,y+1));
 				FindZero(points);
+				if(foundCriticals.size()>0) {
+					Vector2f pos;
+					pos.setZero();
+					for(int i = 0; i<foundCriticals.size();i++) {
+						pos += foundCriticals[i];
+					}
+					pos = pos/foundCriticals.size();
+					AllCriticals.push_back(pos);
+				}
 			}
 		}
 	}

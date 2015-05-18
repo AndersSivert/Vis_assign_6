@@ -26,6 +26,8 @@ public:
 public:
 	void ReadFieldFromFile();
 
+	void CriticalPoints();
+
 	//Domain Decomposition and Change-Of-Sign test:
 	bool IsZeroPossible(int x, int y);
 	//Vector2f FindZero(int x, int y);
@@ -91,6 +93,7 @@ public:
 	//Zero-finding threshold
 
 	//Storing the critical points
+	vector<Vector2f> foundCriticals;
 	vector<Vector2f> AllCriticals;
 	
 	vector<Vector2f> Source;
@@ -102,6 +105,9 @@ public:
 
 	//Threshold value for finding zeroes
 	float ZeroThreshold;
+
+	//Should we try to classify the critical points?
+	bool ClassifyCriticals;
 
 	//LIC texture parameters:
 	//Greyscale or B&W
