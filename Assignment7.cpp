@@ -25,16 +25,16 @@ IMPLEMENT_GEOX_CLASS( Assignment7, 0)
 	ADD_INT32_PROP(xPowerOfTwo,0)
 	ADD_INT32_PROP(yPowerOfTwo,0)
 	ADD_INT32_PROP(textureSeed,0)
-	ADD_BOOLEAN_PROP(ContrastEnhancement,0)
-	ADD_FLOAT32_PROP(DesiredMean,0)
-	ADD_FLOAT32_PROP(DesiredDeviation,0)
+	//ADD_BOOLEAN_PROP(ContrastEnhancement,0)
+	//ADD_FLOAT32_PROP(DesiredMean,0)
+	//ADD_FLOAT32_PROP(DesiredDeviation,0)
 	
 
 	ADD_SEPARATOR("Runge-Kutta parameters")
 	ADD_INT32_PROP(RKSteps,0)
-	//ADD_FLOAT32_PROP(RKStepSize,0)
+	ADD_FLOAT32_PROP(RKStepSize,0)
 	ADD_FLOAT32_PROP(minimumMagnitude,0)
-	
+	ADD_FLOAT32_PROP(ZeroThreshold,0)
 	ADD_SEPARATOR("Kernel parameters")
 	ADD_INT32_PROP(kernelLength,0)
 
@@ -62,7 +62,7 @@ Assignment7::Assignment7()
 {
     viewer = NULL;
 
-	//fileName = "C:\\Users\\Martin\\Desktop\\GeoX\\Assignment07\\Data\\Vector\\ANoise2CT4.am";		//Martin
+	fileName = "C:\\Users\\Martin\\Desktop\\GeoX\\Assignment07\\Data\\Vector\\ANoise2CT4.am";		//Martin
 	//fileName = "";	//Anders
 	//fileName = "";	//Jim
 
@@ -233,8 +233,9 @@ void Assignment7::CriticalPoints() {
 			//point.size = 20;
 			viewer->addPoint(point);
 			viewer->refresh();
-
 		}
+		ComputeSeparatrices();
+		viewer->refresh();
 	} else {
 		for(int i = 0; i<AllCriticals.size(); i++) {
 			
@@ -373,7 +374,39 @@ void Assignment7::ClassifyCriticalPoints() {
 }
 
 void Assignment7::ComputeSeparatrices() {
-	//TODO:Implement this method
+	Vector2f Real;
+	Vector2f Imaginary;
+	Matrix2f vectors;
+	float maxLength = (vField.boundMax()-vField.boundMin()).getSqrNorm()*2;
+	for(int n = 0; n<Saddle.size();n++) {
+		vField.sampleJacobian(Saddle[n]).solveEigenProblem(Real,Imaginary,vectors);
+		for(int i = 0; i<vectors.getRowsDim();i++) {
+			for(int j = -1; j<2;j+=2) {
+				float length = 0;
+				
+				int steps = 0;
+				Vector2f Point = Saddle[n] + vectors[i] * RKStepSize * j;
+				Vector2f oldPoint = vField.sample(Point);
+				oldPoint.normalize();
+				bool forwards = (oldPoint* vectors[i] * j) > 0;
+				oldPoint = Saddle[n];
+				while(vField.insideBounds(Point) && (length < maxLength) && (steps < RKSteps)) {
+
+					viewer->addLine(oldPoint,Point,makeVector4f(0.5,1,1,1));
+					length += (Point-oldPoint).getSqrNorm();
+
+					oldPoint = Point;
+					Point = RungeKuttaIntegration(Point,forwards);
+					
+					if(vField.sample(oldPoint).getSqrNorm()<ZeroThreshold
+						&& vField.sample(Point).getSqrNorm()<ZeroThreshold) {
+							length = maxLength;
+					}
+					steps++;
+				}
+			}
+		}
+	}
 }
 
 //Legacy methods below this point
