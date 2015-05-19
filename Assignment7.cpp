@@ -62,7 +62,7 @@ Assignment7::Assignment7()
 {
     viewer = NULL;
 
-	fileName = "C:\\Users\\Martin\\Desktop\\GeoX\\Assignment07\\Data\\Vector\\ANoise2CT4.am";		//Martin
+	//fileName = "C:\\Users\\Martin\\Desktop\\GeoX\\Assignment07\\Data\\Vector\\ANoise2CT4.am";		//Martin
 	//fileName = "";	//Anders
 	//fileName = "";	//Jim
 
@@ -235,12 +235,9 @@ void Assignment7::CriticalPoints() {
 			viewer->refresh();
 
 		}
-		//TODO: Implement this
 	} else {
-		output << "found points: " << AllCriticals.size() << "\n";
 		for(int i = 0; i<AllCriticals.size(); i++) {
-			output << "drawing point number: " << i << "\n";
-			output << "at coordinates " << AllCriticals[i][0]<<","<<AllCriticals[i][1]<<"\n";
+			
 			Point2D point(AllCriticals[i][0],AllCriticals[i][1]);
 			//point.position = AllCriticals[i];
 			point.color = makeVector4f(1,0,0,1);
@@ -307,15 +304,12 @@ void Assignment7::FindZero(vector<Vector2f> points) {
 }
 
 void Assignment7::FindCriticalPoints() {
-	output<< "start \n";
 	//For every cell...
 	for(int x = 0; x<vField.dims()[0]-1;x++) {
 		for(int y = 0; y<vField.dims()[1]-1;y++) {
-			output << "Checking cell "<< x << "," << y << "\n";
 			//Check if the cell possibly could contain a zero
 			if(IsZeroPossible(x,y)) {
 				foundCriticals.clear();
-				output << "Zero possible\n";
 				//If so, find it
 				vector<Vector2f> points;
 				points.push_back(vField.nodePosition(x,y));
@@ -419,8 +413,6 @@ void Assignment7::GenerateTexture() {
 			}
 		}
 	}
-	output << "segment length 1: " << min((texture.boundMax()[0] - texture.boundMin()[0])/iWidth,(texture.boundMax()[1] - texture.boundMin()[1])/iHeight) << "\n";
-	output << "segment length 2: " << min((texture.nodePosition(0,0)-texture.nodePosition(1,0)).getSqrNorm(),(texture.nodePosition(0,0)-texture.nodePosition(0,1)).getSqrNorm()) << "\n";
 	RKStepSize = min((texture.boundMax()[0] - texture.boundMin()[0])/iWidth,(texture.boundMax()[1] - texture.boundMin()[1])/iHeight);
 	viewer->setTextureGray(texture.getData());
 	viewer->refresh();
